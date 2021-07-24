@@ -2,12 +2,42 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using System.Runtime.Serialization.Formatters.Binary;
+using System.IO;
+using Newtonsoft.Json;
+using LitJson;
+
+// [System.Serializable]
+public class MapDataList
+{
+    public string version;
+    public List<MapInfo> levels;
+}
 
 
+// [System.Serializable]
+public class MapData
+{
 
+
+    public int seq;
+    public int mapWidth;
+    public int mapHeight;
+    public int[,] map;
+
+    // public int[,] confinedMap;
+
+    public List<string> pStarCondition;
+}
+
+public class CoroutineExecuter : MonoBehaviour { }
 
 public class GameManage : MonoBehaviour
+
+
 {
+
+    private static CoroutineExecuter instance;
     public GameObject blockPrefab;
     public GameObject personPrefab;
 
@@ -28,34 +58,392 @@ public class GameManage : MonoBehaviour
 
     public static bool isClickLocked;
 
+    public static ItemData selectedItem;
+
+    public static SelectMode selectMode;
+
+    public static Dictionary<ItemData, int> usedItemDict;
+
+
+
+    public void test(){
+        selectItem(ItemData.isolate);
+    }
+
+
+
+    public static void useItem(int x, int y)
+    {
+
+        selectMode = SelectMode.normal;
+
+        for (int i = 0; i < mapInfo.mapWidth; i++)
+        {
+            for (int j = 0; j < mapInfo.mapHeight; j++)
+            {
+                if (lands[i, j] != null)
+                {
+                    lands[i, j].isItemTargetable = false;
+                }
+
+
+            }
+        }
+        if (selectedItem == ItemData.isolate)
+        {
+            mapInfo.isolatedMap[x, y] = 1;
+            lands[x, y].isIsolated = true;
+            blocks[x, y].changeHeight(2.5f);
+            foreach (Person p in persons[x, y])
+            {
+                p.move(p.x, p.y, p.idx, p.cnt);
+            }
+
+            usedItemDict[selectedItem] += 1;
+
+        }
+        else if (selectedItem == ItemData.release)
+        {
+            mapInfo.isolatedMap[x, y] = 0;
+
+            bool isViolate = GameManage.highlightAroundViolate(x, y);
+            if (!isViolate)
+            {
+                lands[x, y].isIsolated = false;
+                blocks[x, y].changeHeight(3.0f);
+                foreach (Person p in persons[x, y])
+                {
+                    p.move(p.x, p.y, p.idx, p.cnt);
+                }
+            }
+            else
+            {
+                mapInfo.isolatedMap[x, y] = 1;
+            }
+
+            usedItemDict[selectedItem] += 1;
+
+
+        }
+        else if (selectedItem == ItemData.vaccine)
+        {
+            for (int i = 0; i < persons[x, y].Count; i++)
+            {
+                Person p = persons[x, y][i];
+                if (p.idx == mapInfo.getMapValue(x, y) - 1)
+                {
+                    p.gameObject.SetActive(false);
+                    persons[x, y].Remove(p);
+                    break;
+                }
+            }
+            mapInfo.map[x, y] = mapInfo.map[x, y] - 1;
+            foreach (Person p in persons[x, y])
+            {
+                p.move(p.x, p.y, p.idx, p.cnt - 1);
+            }
+
+            usedItemDict[selectedItem] += 1;
+        }
+        else if (selectedItem == ItemData.diagonal)
+        {
+            LandType landType = mapInfo.getLandType(x, y);
+            foreach (Direction d in Direction.getDiagonal4DirectionList()) // 4방향 타일에 대해 Selectable 상태 적용
+            {
+
+                LandType targetLandType = mapInfo.getLandType(x + d.x, y + d.y);
+                if ((targetLandType == LandType.block || targetLandType == landType) && !mapInfo.isIsolatedLand(x + d.x, y + d.y))
+                {
+                    if (!(mapInfo.isConfinedLand(x, y) == true && mapInfo.isConfinedLand(x + d.x, y + d.y) == false))
+                    {
+
+                        lands[x + d.x, y + d.y].isSelectable = true;
+                    }
+
+                }
+            }
+
+            lands[x, y].isSelected = true;
+
+            selectMode = SelectMode.diagonalMove;
+        }
+
+        selectedItem = null;
+    }
+
+
+    public static bool highlightAroundViolate(int x, int y)
+    {
+
+        Land[,] lands = GameManage.lands;
+
+        List<Vector2Int> aroundViolateLandList = mapInfo.getAroundViolateLandList(x, y);
+        bool isViolate = aroundViolateLandList.Count > 0;
+
+        if (isViolate)
+        {
+            // Debug.Log("Violate " + x + " " + y);
+            // isVioloate = false;
+
+            HashSet<Vector2Int> violateLandSet = new HashSet<Vector2Int>();
+
+            foreach (Vector2Int v in aroundViolateLandList)
+            {
+                foreach (Direction d in Direction.get5DirectionList())
+                {
+
+
+                    if (mapInfo.getLandType((int)v.x + d.x, (int)v.y + d.y) != LandType.air)
+                    {
+                        lands[(int)v.x + d.x, (int)v.y + d.y].violateSignDegree += 0.2f;
+                        violateLandSet.Add(new Vector2Int(v.x + d.x, v.y + d.y));
+                    }
+
+
+                }
+            }
+
+            unpaintViolateHighlight(violateLandSet);
+
+        }
+        return isViolate;
+    }
+
+
+    public static void unpaintViolateHighlight(HashSet<Vector2Int> violateLandSet)
+    {
+        if (!instance)
+        {
+            instance = FindObjectOfType<CoroutineExecuter>();
+
+            if (!instance)
+            {
+                instance = new GameObject("CoroutineExecuter").AddComponent<CoroutineExecuter>();
+            }
+        }
+
+        instance.StartCoroutine(WaitForUnpaint());
+        IEnumerator WaitForUnpaint()
+        {
+            yield return new WaitForSeconds(0.5f);
+            foreach (Vector2Int v in violateLandSet)
+            {
+                lands[(int)v.x, (int)v.y].violateSignDegree = 0;
+            }
+        }
+    }
+
+    public static bool selectItem(ItemData item)
+    {
+
+        // Debug.Log(mapInfo.items[item]);
+        // Debug.Log(usedItemDict[item]);
+
+        // if(mapInfo.items[item] <= usedItemDict[item]){
+        //     Debug.Log("Item Limited");
+        //     return false;
+        // }
+
+
+        int[,] map = mapInfo.map;
+        int[,] isolatedMap = mapInfo.isolatedMap;
+
+        if (item == selectedItem)
+        {
+            selectMode = SelectMode.normal;
+            selectedItem = null;
+
+            for (int i = 0; i < mapInfo.mapWidth; i++)
+            {
+                for (int j = 0; j < mapInfo.mapHeight; j++)
+                {
+                    LandType landType = mapInfo.getLandType(i, j);
+
+                    if (landType != LandType.air)
+                    {
+                        lands[i, j].isItemTargetable = false;
+                    }
+                }
+            }
+
+            return false;
+        }
+        else
+        {
+            selectMode = SelectMode.itemTarget;
+            selectedItem = item;
+
+            for (int i = 0; i < mapInfo.mapWidth; i++)
+            {
+                for (int j = 0; j < mapInfo.mapHeight; j++)
+                {
+
+                    if (lands[i, j] != null)
+                    {
+
+                        lands[i, j].isSelected = false;
+                        lands[i, j].isSelectable = false;
+
+                    }
+                }
+            }
+
+
+
+
+            if (item == ItemData.isolate)
+            {
+                for (int i = 0; i < mapInfo.mapWidth; i++)
+                {
+                    for (int j = 0; j < mapInfo.mapHeight; j++)
+                    {
+                        LandType landType = mapInfo.getLandType(i, j);
+                        if ((landType == LandType.person || landType == LandType.player) && isolatedMap[i, j] == 0)
+                        {
+                            lands[i, j].isItemTargetable = true;
+                        }
+
+                    }
+                }
+            }
+            else if (item == ItemData.release)
+            {
+                for (int i = 0; i < mapInfo.mapWidth; i++)
+                {
+                    for (int j = 0; j < mapInfo.mapHeight; j++)
+                    {
+                        LandType landType = mapInfo.getLandType(i, j);
+                        if (isolatedMap[i, j] == 1)
+                        {
+                            lands[i, j].isItemTargetable = true;
+                        }
+
+                    }
+                }
+            }
+            else if (item == ItemData.vaccine)
+            {
+                for (int i = 0; i < mapInfo.mapWidth; i++)
+                {
+                    for (int j = 0; j < mapInfo.mapHeight; j++)
+                    {
+                        LandType landType = mapInfo.getLandType(i, j);
+                        if (landType == LandType.person)
+                        {
+                            lands[i, j].isItemTargetable = true;
+                        }
+
+                    }
+                }
+            }
+            else if (item == ItemData.diagonal)
+            {
+                for (int i = 0; i < mapInfo.mapWidth; i++)
+                {
+                    for (int j = 0; j < mapInfo.mapHeight; j++)
+                    {
+                        LandType landType = mapInfo.getLandType(i, j);
+                        if ((landType == LandType.person || landType == LandType.player) && isolatedMap[i, j] == 0)
+                        {
+                            lands[i, j].isItemTargetable = true;
+                        }
+
+                    }
+                }
+            }
+
+
+
+            return true;
+        }
+    }
+
+    public static void cancelItem()
+    {
+
+        for (int i = 0; i < mapInfo.mapWidth; i++)
+        {
+            for (int j = 0; j < mapInfo.mapHeight; j++)
+            {
+                if (lands[i, j] != null)
+                {
+                    lands[i, j].isItemTargetable = false;
+                }
+
+
+            }
+        }
+
+        selectMode = SelectMode.normal;
+        selectedItem = null;
+    }
+
+
 
     public void init()
     {
         moveCount = 0;
+        string json = Resources.Load("MapData").ToString();
+        // Debug.Log(JsonUtility.FromJson<MapDataList>(json).levels[0].map);
 
-        mapInfo.init(new Dictionary<string, dynamic>{
-        {"map", new int[5, 5]{
-                {1, 2, 1, -1, 2},
-                {4, 0, 1, 1, 999999},
-                {101, 1, 1, 0, 0},
-                {0, 101, -1, 1, 1},
-                {101, 1, 0, -1, 2},
-                }},{"mapWidth" , 5}, {"mapHeight" , 5},
-                {"isolatedMap", new int[5, 5]{
-                {0, 0, 0, 0, 0},
-                {1, 0, 0, 0, 0},
-                {0, 0, 0, 1, 0},
-                {1, 0, 0, 0, 0},
-                {0, 0, 0, 0, 0},
-                }}, {"confinedMap", new int[5, 5]{
-                {1, 1, 0, 0, 0},
-                {0, 0, 0, 0, 0},
-                {0, 0, 0, 0, 0},
-                {0, 0, 0, 1, 1},
-                {0, 0, 0, 0, 1},
-                }}
+        // JsonConvert.DeserializeObject<MapDataList>(json).levels[0].printMap();
+        // Debug.Log("level" + GlobalVar.Instance.level);
 
-        });
+        var jsonData = JsonMapper.ToObject(json);
+
+        Debug.Log(jsonData["levels"][0].GetType());
+
+        // var dict = Json.Deserialize(json) as Dictionary<string, object>;
+        // List<object> levels = dict["levels"] as List<object>;
+        mapInfo = new MapInfo();
+        
+
+        // return;
+
+        if (GlobalVar.Instance == null)
+        {
+            mapInfo.fromJson(jsonData["levels"][0]);
+        }
+        else
+        {
+            mapInfo.fromJson(jsonData["levels"][GlobalVar.Instance.level]);
+        }
+
+        usedItemDict = new Dictionary<ItemData, int>();
+
+        foreach (ItemData item in ItemData.getItemDataList())
+        {
+            usedItemDict.Add(item, 0);
+        }
+
+
+
+        mapInfo.init();
+
+
+        // mapInfo.init(new Dictionary<string, dynamic>{
+        // {"map", new int[5, 5]{
+        //         {1, 2, 1, -1, 2},
+        //         {4, 0, 1, 1, 999999},
+        //         {101, 1, 1, 0, 0},
+        //         {0, 101, -1, 1, 1},
+        //         {101, 1, 0, -1, 2},
+        //         }},{"mapWidth" , 5}, {"mapHeight" , 5},
+        //         {"isolatedMap", new int[5, 5]{
+        //         {0, 0, 0, 0, 0},
+        //         {1, 0, 0, 0, 0},
+        //         {0, 0, 0, 1, 0},
+        //         {1, 0, 0, 0, 0},
+        //         {0, 0, 0, 0, 0},
+        //         }}, {"confinedMap", new int[5, 5]{
+        //         {1, 1, 0, 0, 0},
+        //         {0, 0, 0, 0, 0},
+        //         {0, 0, 0, 0, 0},
+        //         {0, 0, 0, 1, 1},
+        //         {0, 0, 0, 0, 1},
+        //         }}
+
+        // });
         // mapInfo.init(new Dictionary<string, dynamic>{
         // {"map", new int[4, 4]{
         //         {0, 0, 1, -1},
@@ -77,6 +465,9 @@ public class GameManage : MonoBehaviour
                 lands[i, j] = null;
             }
         }
+
+        selectedItem = null;
+        selectMode = SelectMode.normal;
 
     }
 
@@ -114,11 +505,13 @@ public class GameManage : MonoBehaviour
                     {
                         // isolated 공간이면 0.5만큼 아래에 위치.
 
-                        block = Instantiate(blockPrefab, new Vector3(j, -(landHeight / 2) + 0.5f, mapInfo.mapHeight - i - 1), Quaternion.identity);
+                        block = Instantiate(blockPrefab, new Vector3(j, -(landHeight / 2), mapInfo.mapHeight - i - 1), Quaternion.identity);
+                        // block.moveTo(new Vector3(j, (landHeight / 2) - 0.5f, mapInfo.mapHeight - i - 1));
                     }
                     else
                     {
                         block = Instantiate(blockPrefab, new Vector3(j, -(landHeight / 2), mapInfo.mapHeight - i - 1), Quaternion.identity);
+                        // block.moveTo(new Vector3(j, (landHeight / 2), mapInfo.mapHeight - i - 1));
                     }
 
 
@@ -177,7 +570,7 @@ public class GameManage : MonoBehaviour
                 if (hit.collider.gameObject.tag == "Land") // land 클릭했을 때
                 {
                     hit.collider.gameObject.GetComponent<Land>().onClick();
-                   
+
                 }
             }
         }
@@ -186,6 +579,24 @@ public class GameManage : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Space))
         {
             SceneManager.LoadScene("GameScene");
+        }
+
+        // on press j
+        if (Input.GetKeyDown(KeyCode.H))
+        {
+            selectItem(ItemData.isolate);
+        }
+        if (Input.GetKeyDown(KeyCode.J))
+        {
+            selectItem(ItemData.release);
+        }
+        if (Input.GetKeyDown(KeyCode.K))
+        {
+            selectItem(ItemData.vaccine);
+        }
+        if (Input.GetKeyDown(KeyCode.L))
+        {
+            selectItem(ItemData.diagonal);
         }
     }
 }

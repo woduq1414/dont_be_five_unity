@@ -13,7 +13,7 @@ public class Person : MonoBehaviour
 
     public bool isPlayer;
 
-    Rigidbody rb;
+    // Rigidbody rb;
     BoxCollider bc;
 
     Vector3 prevMovePos = new Vector3();
@@ -24,8 +24,8 @@ public class Person : MonoBehaviour
     MeshRenderer meshRenderer;
     Material material;
 
-    public bool explode;
-    public Vector3 explodeVector;
+    // public bool explode;
+    // public Vector3 explodeVector;
 
     public void init(bool isPlayer)
     {
@@ -75,6 +75,7 @@ public class Person : MonoBehaviour
                 yield return new WaitForSeconds(0.3f);
                 movePos = prevMovePos;
                 GameManage.isClickLocked = false;
+                // lands[x, y].onClick();
             }
 
 
@@ -85,17 +86,10 @@ public class Person : MonoBehaviour
 
     }
 
-    // public void undo()
-    // {
-    //     transform.position = prevMovePos;
-    // }
-
-
-    // Start is called before the first frame update
     void Start()
     {
-        rb = GetComponent<Rigidbody>();
-        rb.useGravity = false;
+        // rb = GetComponent<Rigidbody>();
+        // rb.useGravity = false;
 
 
 
@@ -127,22 +121,22 @@ public class Person : MonoBehaviour
     // Update is called once per frame
     void FixedUpdate()
     {
-        if (explode)
-        {
-            // rb.useGravity = true;
-            // apply random vector force
-            if (explodeVector.x == 0 && explodeVector.y == 0 && explodeVector.z == 0)
-            {
-                bc.enabled = true;
+        // if (explode)
+        // {
+        //     // rb.useGravity = true;
+        //     // apply random vector force
+        //     if (explodeVector.x == 0 && explodeVector.y == 0 && explodeVector.z == 0)
+        //     {
+        //         bc.enabled = true;
 
-                explodeVector = new Vector3(Random.Range(-1.0f, 1.0f), Random.Range(-1.0f, 1.0f), Random.Range(1.0f, 1.0f)) * 1.5f;
-            }
+        //         explodeVector = new Vector3(Random.Range(-1.0f, 1.0f), Random.Range(-1.0f, 1.0f), Random.Range(1.0f, 1.0f)) * 1.5f;
+        //     }
 
 
-            rb.AddForceAtPosition(explodeVector, transform.position);
-            rb.AddTorque(Vector3.back * 0.1f);
-            return;
-        }
+        //     rb.AddForceAtPosition(explodeVector, transform.position);
+        //     rb.AddTorque(Vector3.back * 0.1f);
+        //     return;
+        // }
 
 
 

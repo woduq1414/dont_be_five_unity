@@ -1,9 +1,10 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using LitJson;
 
-
-public class MapInfo : MonoBehaviour
+[System.Serializable]
+public class MapInfo
 {
     public int mapWidth;
     public int mapHeight;
@@ -12,7 +13,54 @@ public class MapInfo : MonoBehaviour
     public int[,] isolatedMap;
     public int[,] confinedMap;
 
+    public Dictionary<ItemData, int> items;
+
+
+
     public Vector2Int goalPos = new Vector2Int(0, 0);
+
+
+    public void fromJson(JsonData json){
+        mapWidth = (int)json["mapWidth"];
+        mapHeight = (int)json["mapHeight"];
+
+        bool isIsolatedMapExist = json.ContainsKey("isolatedMap");
+        bool isConfinedMapExist = json.ContainsKey("confinedMap");
+
+        map = new int[mapWidth, mapHeight];
+        isolatedMap = new int[mapWidth, mapHeight];
+        confinedMap = new int[mapWidth, mapHeight];
+
+        for(int i = 0 ; i < mapWidth ; i++){
+            for(int j = 0 ; j < mapHeight ; j++){
+                map[i, j] = (int)json["map"][i][j];
+                if(isIsolatedMapExist){
+                    isolatedMap[i, j] = (int)json["isolatedMap"][i][j];
+                }
+                if(isConfinedMapExist){
+                    confinedMap[i, j] = (int)json["confinedMap"][i][j];
+                }
+            }
+        }
+
+        items = new Dictionary<ItemData, int>();
+
+        if(json.ContainsKey("items")){
+            foreach(ItemData item in ItemData.getItemDataList()){
+                if(json["items"].ContainsKey(item.name)){
+                    items[item] = (int)json["items"][item.name];
+                }else{
+                    items[item] = 0;
+                }
+            }
+        }
+
+
+
+
+        // items = new Dictionary<string, object>();
+        // printMap();
+    }
 
 
     public bool isIsolatedLand(int x, int y)
@@ -52,13 +100,24 @@ public class MapInfo : MonoBehaviour
 
 
 
-    public void init(Dictionary<string, dynamic> mapDataDict)
+    public void init(Dictionary<string, dynamic> mapDataDict = null)
     {
-        mapWidth = mapDataDict["mapWidth"];
-        mapHeight = mapDataDict["mapHeight"];
-        map = mapDataDict["map"];
-        isolatedMap = mapDataDict["isolatedMap"];
-        confinedMap = mapDataDict["confinedMap"];
+
+        if (mapDataDict != null)
+        {
+
+            mapWidth = mapDataDict["mapWidth"];
+            mapHeight = mapDataDict["mapHeight"];
+            map = mapDataDict["map"];
+            isolatedMap = mapDataDict["isolatedMap"];
+            confinedMap = mapDataDict["confinedMap"];
+
+        }
+
+        // Debug.Log(items["vaccine"]);
+        // foreach(string k in items.Keys){
+            // Debug.Log(items[k]);
+        // }
 
         for (int i = 0; i < mapWidth; i++)
         {
@@ -71,6 +130,16 @@ public class MapInfo : MonoBehaviour
                     break;
                 }
             }
+        }
+
+        if (isolatedMap == null)
+        {
+            isolatedMap = new int[mapWidth, mapHeight];
+        }
+
+        if (confinedMap == null)
+        {
+            confinedMap = new int[mapWidth, mapHeight];
         }
 
 
@@ -186,6 +255,9 @@ public class MapInfo : MonoBehaviour
 
         return aroundViolateLandList;
     }
+
+
+
 
 
 

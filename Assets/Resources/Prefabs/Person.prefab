@@ -13,7 +13,6 @@ GameObject:
   - component: {fileID: 1541829366584215773}
   - component: {fileID: 1765251514966156093}
   - component: {fileID: -6118508849953953161}
-  - component: {fileID: 7577362482784083649}
   - component: {fileID: 4945884593545138379}
   - component: {fileID: 763054993884368962}
   m_Layer: 0
@@ -117,24 +116,6 @@ MonoBehaviour:
   idx: 0
   cnt: 0
   isPlayer: 0
-  explode: 0
-  explodeVector: {x: 0, y: 0, z: 0}
---- !u!54 &7577362482784083649
-Rigidbody:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4503727344378865206}
-  serializedVersion: 2
-  m_Mass: 1
-  m_Drag: 0
-  m_AngularDrag: 0.05
-  m_UseGravity: 1
-  m_IsKinematic: 0
-  m_Interpolate: 0
-  m_Constraints: 0
-  m_CollisionDetection: 0
 --- !u!65 &4945884593545138379
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -165,5 +146,3 @@ MonoBehaviour:
   idx: 0
   cnt: 0
   isPlayer: 0
-  explode: 0
-  explodeVector: {x: 0, y: 0, z: 0}
