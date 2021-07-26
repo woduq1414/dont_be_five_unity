@@ -54,7 +54,7 @@ public class Person : MonoBehaviour
             objectY = _y + Mathf.Sin(radianDegree) * 0.25f;
         }
         prevMovePos = transform.position;
-        movePos = new Vector3(objectY, mapInfo.isIsolatedLand(_x, _y) ? 5.5f + 0.3f : 6.0f + 0.3f, mapInfo.mapHeight - objectX - 1);
+        movePos = new Vector3(objectY, mapInfo.isIsolatedLand(_x, _y) ? 5.3f + 0.3f : 6.0f + 0.3f, mapInfo.mapHeight - objectX - 1);
 
         if (undo == false)
         {

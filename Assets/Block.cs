@@ -47,7 +47,7 @@ public class Block : MonoBehaviour
 
         if (mapInfo.isIsolatedLand(x, y) == true)
         {
-            moveTo(new Vector3(transform.position.x, (6 / 2) - 0.5f, transform.position.z));
+            moveTo(new Vector3(transform.position.x, (6 / 2) - 0.7f, transform.position.z));
         }
         else
         {

@@ -15,6 +15,8 @@ public class MapInfo
 
     public Dictionary<ItemData, int> items;
 
+    public string[] pStarCondition;
+
 
 
     public Vector2Int goalPos = new Vector2Int(0, 0);
@@ -53,6 +55,12 @@ public class MapInfo
                     items[item] = 0;
                 }
             }
+        }
+
+        pStarCondition = new string[3];
+
+        for (int i  = 0; i < 3; i++){
+            pStarCondition[i] = (string)json["pStarCondition"][i];
         }
 
 

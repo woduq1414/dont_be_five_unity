@@ -13,8 +13,8 @@
         ],
         "pStarCondition": [
           "clear",
-          "move 15 & clear",
-          "move 10 & clear"
+          "move 15",
+          "move 10"
         ],
         "items" : {
           "isolate" : 1,
@@ -33,8 +33,8 @@
         ],
         "pStarCondition": [
           "clear",
-          "move 15 & clear",
-          "move 10 & clear"
+          "move 15",
+          "move 10"
         ]
       },
       {
@@ -49,8 +49,8 @@
         ],
         "pStarCondition": [
           "clear",
-          "move 15 & clear",
-          "move 10 & clear"
+          "move 15",
+          "move 10"
         ]
       },
       {
@@ -65,8 +65,8 @@
         ],
         "pStarCondition": [
           "clear",
-          "move 15 & clear",
-          "move 10 & clear"
+          "move 15",
+          "move 10"
         ]
       },
       {
@@ -96,11 +96,15 @@
         ],
         "pStarCondition": [
           "clear",
-          "move 15 & clear",
-          "move 10 & clear"
-        ]
-      
-     
+          "move 15",
+          "move 10"
+        ],
+        "items" : {
+          "isolate" : 1,
+          "release" : 1,
+          "vaccine" : 2,
+          "diagonal" : 1
+        }
       }
     ]
 }

@@ -6,6 +6,9 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.IO;
 using Newtonsoft.Json;
 using LitJson;
+using UnityEngine.UI;
+
+using System.Linq;
 
 // [System.Serializable]
 public class MapDataList
@@ -45,6 +48,14 @@ public class GameManage : MonoBehaviour
 
     public GameObject goalPrefab;
 
+
+    public GameObject canvas;
+
+    public GameObject itemButtonPrefab;
+
+    public GameObject starConditionSquarePrefab;
+
+
     public static Block[,] blocks;
     public static Land[,] lands;
 
@@ -66,7 +77,8 @@ public class GameManage : MonoBehaviour
 
 
 
-    public void test(){
+    public void test()
+    {
         selectItem(ItemData.isolate);
     }
 
@@ -93,7 +105,7 @@ public class GameManage : MonoBehaviour
         {
             mapInfo.isolatedMap[x, y] = 1;
             lands[x, y].isIsolated = true;
-            blocks[x, y].changeHeight(2.5f);
+            blocks[x, y].changeHeight(2.3f);
             foreach (Person p in persons[x, y])
             {
                 p.move(p.x, p.y, p.idx, p.cnt);
@@ -248,28 +260,33 @@ public class GameManage : MonoBehaviour
         int[,] map = mapInfo.map;
         int[,] isolatedMap = mapInfo.isolatedMap;
 
+
+        for (int i = 0; i < mapInfo.mapWidth; i++)
+        {
+            for (int j = 0; j < mapInfo.mapHeight; j++)
+            {
+                LandType landType = mapInfo.getLandType(i, j);
+
+                if (landType != LandType.air)
+                {
+                    lands[i, j].isItemTargetable = false;
+                }
+            }
+        }
+
         if (item == selectedItem)
         {
             selectMode = SelectMode.normal;
             selectedItem = null;
 
-            for (int i = 0; i < mapInfo.mapWidth; i++)
-            {
-                for (int j = 0; j < mapInfo.mapHeight; j++)
-                {
-                    LandType landType = mapInfo.getLandType(i, j);
-
-                    if (landType != LandType.air)
-                    {
-                        lands[i, j].isItemTargetable = false;
-                    }
-                }
-            }
 
             return false;
         }
         else
         {
+
+
+
             selectMode = SelectMode.itemTarget;
             selectedItem = item;
 
@@ -396,7 +413,7 @@ public class GameManage : MonoBehaviour
         // var dict = Json.Deserialize(json) as Dictionary<string, object>;
         // List<object> levels = dict["levels"] as List<object>;
         mapInfo = new MapInfo();
-        
+
 
         // return;
 
@@ -469,7 +486,92 @@ public class GameManage : MonoBehaviour
         selectedItem = null;
         selectMode = SelectMode.normal;
 
+
+        int k = 0;
+        var availableItemList = new List<ItemData>(mapInfo.items.Keys).Where(x => mapInfo.items[x] != 0).ToList();
+
+        foreach (ItemData item in availableItemList)
+        {
+            GameObject itemButton = Instantiate(itemButtonPrefab);
+            itemButton.transform.SetParent(canvas.transform);
+            itemButton.transform.localScale = new Vector3(1f, 1f, 1f);
+
+            Vector3 buttonPos = new Vector3(-(availableItemList.Count - 1) * (250 / 2) + k * 250,
+             -GlobalVar.canvasHeight / 2 + 200, 0f);
+
+            itemButton.GetComponent<RectTransform>().anchoredPosition = buttonPos;
+            itemButton.GetComponent<ItemButton>().init(item);
+
+            k++;
+        }
+
+
+        GameObject upperStatusContainer = canvas.GetComponentsInChildren<Transform>()
+                             .FirstOrDefault(c => c.gameObject.name == "UpperStatusContainer")?.gameObject;
+
+        for (int i = 0; i < 3; i++)
+        {
+            GameObject starConditionSquare = Instantiate(starConditionSquarePrefab);
+            starConditionSquare.transform.SetParent(upperStatusContainer.transform);
+            starConditionSquare.transform.localScale = new Vector3(1.5f, 1.5f, 1.5f);
+            starConditionSquare.GetComponent<RectTransform>().anchoredPosition = new Vector3(-(2 - i) * 180 - 50, -12, 0);
+            starConditionSquare.transform.GetChild(1).GetComponent<Text>().text = getShortStarConditionText(mapInfo.pStarCondition[i]);
+        }
+
+
     }
+
+
+    public string getShortStarConditionText(string pStarCondition)
+    {
+        string result = "";
+        string sc = pStarCondition.Trim();
+        if (sc == "clear")
+        {
+            return "클리어";
+        }
+        string[] splitted = sc.Split(' ');
+        // Debug.Log(splitted.Length + "hello");
+        if (splitted.Length != 2)
+        {
+            return null;
+        }
+        if (splitted[0] == "item")
+        {
+            result += "아이템";
+        }else if(splitted[0] == "move"){
+            result += "이동";
+        }
+        else
+        {
+            foreach (ItemData item in ItemData.getItemDataList())
+            {
+                if (item.name == splitted[0])
+                {
+                    result += item.caption;
+                }
+            }
+        }
+        if (result == "")
+        {
+            return null;
+        }
+        result += " ";
+        if (splitted[1] == "0")
+        {
+            result += "X";
+        }
+        else
+        {
+            result += splitted[1];
+        }
+
+        return result;
+
+
+
+    }
+
 
 
     // Start is called before the first frame update
@@ -479,7 +581,7 @@ public class GameManage : MonoBehaviour
 
 
         // camera 위치, 각도 설정
-        Camera.main.transform.position = new Vector3(2, 14.5f, -1.5f);
+        Camera.main.transform.position = new Vector3(2, 15.2f, -3.6f);
         Camera.main.transform.rotation = Quaternion.Euler(60, 0, 0);
 
         Debug.Log("GameManagerScript Start");
@@ -550,6 +652,9 @@ public class GameManage : MonoBehaviour
 
         // goal 렌더링
         GameObject goal = Instantiate(goalPrefab, new Vector3(mapInfo.goalPos.y, landHeight + 0.85f, mapInfo.mapHeight - mapInfo.goalPos.x - 1), Quaternion.identity);
+
+
+
 
 
 

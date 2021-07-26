@@ -134,7 +134,7 @@ public class Land : MonoBehaviour
 
         LandType landType = mapInfo.getLandType(x, y);
 
-        Debug.Log(mapInfo.getLandPeopleCount(x, y));
+        // Debug.Log(mapInfo.getLandPeopleCount(x, y));
 
 
         bool prevIsSelected = isSelected;
@@ -249,7 +249,9 @@ public class Land : MonoBehaviour
             {
                 
                 
-
+                if(!isViolate){
+                    GameManage.moveCount += 1;
+                }
 
 
 
@@ -278,7 +280,7 @@ public class Land : MonoBehaviour
                 {
                     if (!isViolate)
                     {
-                        GameManage.moveCount += 1;
+                        
                         // 움직이고자 하는 목적지 타일 자동 클릭    
                         lands[x, y].onClick();
 

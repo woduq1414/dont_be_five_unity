@@ -8,6 +8,10 @@ public class GlobalVar : MonoBehaviour
 
     public int level { get; set; }
 
+    public static int canvasWidth = 1080;
+    public static int canvasHeight = 2160;
+
+
     public void setNextLevel()
     {
         level++;

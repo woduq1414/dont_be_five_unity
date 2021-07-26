@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-public class TextScript : MonoBehaviour
+public class MoveCountTextScript : MonoBehaviour
 {
     public Text MoveCountText;
 
@@ -15,6 +15,6 @@ public class TextScript : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        MoveCountText.text = "이동: " + GameManage.moveCount;
+        MoveCountText.text = GameManage.moveCount.ToString();
     }
 }
