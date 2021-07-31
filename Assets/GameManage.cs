@@ -423,7 +423,7 @@ public class GameManage : MonoBehaviour
         }
         else
         {
-            mapInfo.fromJson(jsonData["levels"][GlobalVar.Instance.level]);
+            mapInfo.fromJson(jsonData["levels"][GlobalVar.Instance.level - 1]);
         }
 
         usedItemDict = new Dictionary<ItemData, int>();
@@ -703,5 +703,10 @@ public class GameManage : MonoBehaviour
         {
             selectItem(ItemData.diagonal);
         }
+    }
+
+
+    public static void restartGame(){
+        SceneManager.LoadScene("GameScene");
     }
 }

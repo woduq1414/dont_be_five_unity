@@ -267,9 +267,12 @@ public class Land : MonoBehaviour
                     StartCoroutine(WaitForNextLevel());
                     IEnumerator WaitForNextLevel()
                     {
-                        yield return new WaitForSeconds(1f);
-                        GlobalVar.Instance.setNextLevel();
-                        SceneManager.LoadScene("GameScene");
+                        yield return new WaitForSeconds(0.5f);
+
+                        SceneManager.LoadScene("GameCompleteScene");
+
+                        // GlobalVar.Instance.setNextLevel();
+                        // SceneManager.LoadScene("GameScene");
                     }
 
 

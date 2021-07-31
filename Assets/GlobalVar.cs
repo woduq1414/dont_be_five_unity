@@ -15,15 +15,15 @@ public class GlobalVar : MonoBehaviour
     public void setNextLevel()
     {
         level++;
-        if (level >= 5)
+        if (level > 5)
         {
-            level = 0;
+            level = 1;
         }
     }
 
     GlobalVar()
     {
-        level = 0;
+        level = 1;
     }
 
 
@@ -48,27 +48,27 @@ public class GlobalVar : MonoBehaviour
         //when pressed number key
         if (Input.GetKeyDown(KeyCode.Alpha1))
         {
-            level = 0;
+            level = 1;
             isLevelChange = true;
         }
         else if (Input.GetKeyDown(KeyCode.Alpha2))
         {
-            level = 1;
+            level = 2;
             isLevelChange = true;
         }
         else if (Input.GetKeyDown(KeyCode.Alpha3))
         {
-            level = 2;
+            level = 3;
             isLevelChange = true;
         }
         else if (Input.GetKeyDown(KeyCode.Alpha4))
         {
-            level = 3;
+            level = 4;
             isLevelChange = true;
         }
         else if (Input.GetKeyDown(KeyCode.Alpha5))
         {
-            level = 4;
+            level = 5;
             isLevelChange = true;
         }
         if (isLevelChange)
