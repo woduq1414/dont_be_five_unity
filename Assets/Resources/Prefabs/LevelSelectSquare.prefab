@@ -213,3 +213,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 31222edf536b535478e3a7355510f9ca, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  starPrefab: {fileID: 2761886439795548787, guid: 0f947387c640c41489e105f27238f80f,
+    type: 3}
+  lockPrefab: {fileID: 4168741566330061517, guid: fa86a28f2b889a449b11bc7b25662c10,
+    type: 3}

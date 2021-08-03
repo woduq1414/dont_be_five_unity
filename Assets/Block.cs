@@ -12,6 +12,9 @@ public class Block : MonoBehaviour
     // bool isMovePosAssigned = false;
 
 
+
+
+
     public float tDelta = 0.0f;
     Vector3 vel = Vector3.zero;
     public void changeHeight(float height)
@@ -63,6 +66,19 @@ public class Block : MonoBehaviour
     {
         return transform.GetChild(0).GetComponent<Land>();
     }
+
+    public void deactive()
+    {
+        transform.GetChild(1).GetComponent<UnderLand>().gameObject.SetActive(false);
+        transform.GetChild(0).GetComponent<Land>().isActive = false;
+    }
+
+    public void active()
+    {
+        transform.GetChild(1).GetComponent<UnderLand>().gameObject.SetActive(true);
+        transform.GetChild(0).GetComponent<Land>().isActive = true;
+    }
+
 
 
     public void moveTo(Vector3 pos)

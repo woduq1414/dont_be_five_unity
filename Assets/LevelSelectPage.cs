@@ -23,7 +23,7 @@ public class LevelSelectPage : MonoBehaviour
     static int currentPage = 0;
     static int hCount = 4;
     static int vCount = 5;
-    static int pageCount =1;
+    static int pageCount =3;
 
     // public float canvasWidth = 0;
 
@@ -49,6 +49,8 @@ public class LevelSelectPage : MonoBehaviour
 
         //  0 => 0, 3 => 730
 
+        JsonData levelModeProgress = Storage.get("levelModeProgress");
+
         for (int k = 0; k < pageCount; k++)
         {
             for (int i = 0; i < vCount; i++)
@@ -64,7 +66,14 @@ public class LevelSelectPage : MonoBehaviour
                         , 0);
 
                     int level = k * hCount * vCount + i * hCount + j + 1;
-                    levelSelectSquare.GetComponent<LevelSelectSquare>().init(_level: level);
+
+                    bool[] levelProgressInfo = new bool[5];
+                    for(int l = 0; l < 5; l++){
+                        levelProgressInfo[l] = (bool)levelModeProgress[level - 1][l];
+                    } 
+
+
+                    levelSelectSquare.GetComponent<LevelSelectSquare>().init(_level: level, _levelProgressInfo: levelProgressInfo);
 
                 }
             }

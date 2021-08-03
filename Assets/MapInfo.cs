@@ -19,10 +19,11 @@ public class MapInfo
 
 
 
-    public Vector2Int goalPos = new Vector2Int(0, 0);
+    public Vector2Int goalPos = new Vector2Int(-1, -1);
 
 
-    public void fromJson(JsonData json){
+    public void fromJson(JsonData json)
+    {
         mapWidth = (int)json["mapWidth"];
         mapHeight = (int)json["mapHeight"];
 
@@ -33,13 +34,17 @@ public class MapInfo
         isolatedMap = new int[mapWidth, mapHeight];
         confinedMap = new int[mapWidth, mapHeight];
 
-        for(int i = 0 ; i < mapWidth ; i++){
-            for(int j = 0 ; j < mapHeight ; j++){
+        for (int i = 0; i < mapWidth; i++)
+        {
+            for (int j = 0; j < mapHeight; j++)
+            {
                 map[i, j] = (int)json["map"][i][j];
-                if(isIsolatedMapExist){
+                if (isIsolatedMapExist)
+                {
                     isolatedMap[i, j] = (int)json["isolatedMap"][i][j];
                 }
-                if(isConfinedMapExist){
+                if (isConfinedMapExist)
+                {
                     confinedMap[i, j] = (int)json["confinedMap"][i][j];
                 }
             }
@@ -47,19 +52,32 @@ public class MapInfo
 
         items = new Dictionary<ItemData, int>();
 
-        if(json.ContainsKey("items")){
-            foreach(ItemData item in ItemData.getItemDataList()){
-                if(json["items"].ContainsKey(item.name)){
+
+        foreach (ItemData item in ItemData.getItemDataList())
+        {
+            if (json.ContainsKey("items"))
+            {
+                if (json["items"].ContainsKey(item.name))
+                {
                     items[item] = (int)json["items"][item.name];
-                }else{
+                }
+                else
+                {
                     items[item] = 0;
                 }
             }
+            else
+            {
+                items[item] = 0;
+            }
+
         }
+
 
         pStarCondition = new string[3];
 
-        for (int i  = 0; i < 3; i++){
+        for (int i = 0; i < 3; i++)
+        {
             pStarCondition[i] = (string)json["pStarCondition"][i];
         }
 
@@ -68,6 +86,92 @@ public class MapInfo
 
         // items = new Dictionary<string, object>();
         // printMap();
+    }
+
+
+    public JsonData toJson()
+    {
+        Debug.Log(mapWidth + "/" + mapHeight);
+        JsonData json = new JsonData();
+        json["mapWidth"] = mapWidth;
+        json["mapHeight"] = mapHeight;
+        json["map"] = new JsonData();
+        json["map"].SetJsonType(JsonType.Array);
+        for (int i = 0; i < mapWidth; i++)
+        {
+            json["map"].Add(new JsonData());
+            json["map"][i].SetJsonType(JsonType.Array);
+            for (int j = 0; j < mapHeight; j++)
+            {
+                json["map"][i].Add(map[i, j]);
+            }
+
+        }
+
+        if (isolatedMap != null)
+        {
+            json["isolatedMap"] = new JsonData();
+            json["isolatedMap"].SetJsonType(JsonType.Array);
+            for (int i = 0; i < mapWidth; i++)
+            {
+                json["isolatedMap"].Add(new JsonData());
+                json["isolatedMap"][i].SetJsonType(JsonType.Array);
+                for (int j = 0; j < mapHeight; j++)
+                {
+                    json["isolatedMap"][i].Add(isolatedMap[i, j]);
+                }
+            }
+
+        }
+
+        if (confinedMap != null)
+        {
+            json["confinedMap"] = new JsonData();
+            json["confinedMap"].SetJsonType(JsonType.Array);
+            for (int i = 0; i < mapWidth; i++)
+            {
+                json["confinedMap"].Add(new JsonData());
+                json["confinedMap"][i].SetJsonType(JsonType.Array);
+                for (int j = 0; j < mapHeight; j++)
+                {
+                    json["confinedMap"][i].Add(confinedMap[i, j]);
+                }
+            }
+        }
+        if (items != null)
+        {
+            json["items"] = new JsonData();
+            foreach (ItemData item in ItemData.getItemDataList())
+            {
+                if (items.ContainsKey(item))
+                {
+                    json["items"][item.name] = items[item];
+                }
+                else
+                {
+                    json["items"][item.name] = 0;
+                }
+            }
+        }
+        if (pStarCondition != null)
+        {
+            json["pStarCondition"] = new JsonData();
+            json["pStarCondition"].SetJsonType(JsonType.Array);
+            for (int i = 0; i < 3; i++)
+            {
+                json["pStarCondition"].Add(pStarCondition[i]);
+            }
+        }
+
+        return json;
+    }
+
+
+    public MapInfo getCopiedMapInfo(){
+        MapInfo newMapInfo = new MapInfo();
+        newMapInfo.fromJson(toJson());
+        return newMapInfo;
+
     }
 
 
@@ -124,7 +228,7 @@ public class MapInfo
 
         // Debug.Log(items["vaccine"]);
         // foreach(string k in items.Keys){
-            // Debug.Log(items[k]);
+        // Debug.Log(items[k]);
         // }
 
         for (int i = 0; i < mapWidth; i++)

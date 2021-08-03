@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.IO;
-using Newtonsoft.Json;
+// using Newtonsoft.Json;
 using LitJson;
 using UnityEngine.UI;
 
@@ -40,6 +40,16 @@ public class GameManage : MonoBehaviour
 
 {
 
+
+    public static GameManage Instance = null;              //Static instance of GameManager which allows it to be accessed by any other script.
+
+    //Awake is always called before any Start functions
+
+    public bool initIsEditMode = false;
+    public static bool isEditMode = false;
+
+    public static EditMode editMode = null;
+
     private static CoroutineExecuter instance;
     public GameObject blockPrefab;
     public GameObject personPrefab;
@@ -54,6 +64,8 @@ public class GameManage : MonoBehaviour
     public GameObject itemButtonPrefab;
 
     public GameObject starConditionSquarePrefab;
+
+    public static Goal goal;
 
 
     public static Block[,] blocks;
@@ -219,6 +231,50 @@ public class GameManage : MonoBehaviour
 
         }
         return isViolate;
+    }
+
+
+    public static void highlightAllViolate()
+    {
+
+        for (int i = 0; i < mapInfo.mapWidth; i++)
+        {
+            for (int j = 0; j < mapInfo.mapHeight; j++)
+            {
+
+                if (lands[i, j] != null)
+                {
+                    lands[i, j].violateSignDegree = 0;
+                }
+
+
+            }
+        }
+
+        for (int i = 0; i < mapInfo.mapWidth; i++)
+        {
+            for (int j = 0; j < mapInfo.mapHeight; j++)
+            {
+
+                if (mapInfo.isTargetLandViolate(i, j))
+                {
+                    foreach (Direction d in Direction.get5DirectionList())
+                    {
+                        Vector2Int v = new Vector2Int(i, j);
+
+                        if (mapInfo.getLandType((int)v.x + d.x, (int)v.y + d.y) != LandType.air)
+                        {
+                            lands[(int)v.x + d.x, (int)v.y + d.y].violateSignDegree += 0.2f;
+                            // violateLandSet.Add(new Vector2Int(v.x + d.x, v.y + d.y));
+                        }
+
+
+                    }
+                }
+
+
+            }
+        }
     }
 
 
@@ -395,79 +451,195 @@ public class GameManage : MonoBehaviour
         selectedItem = null;
     }
 
+    public static void gameFinished()
+    {
+        GlobalVar.Instance.gameData["achievedStar"] = new bool[3];
+
+        bool[] achievedStar = new bool[3];
+        for (int i = 0; i < 3; i++)
+        {
+            string pStarCondition = GameManage.mapInfo.pStarCondition[i];
+            string sc = pStarCondition.Trim();
+            if (sc == "clear")
+            {
+                achievedStar[i] = true;
+                continue;
+            }
+            string[] splitted = sc.Split(' ');
+            if (splitted.Length != 2)
+            {
+                achievedStar[i] = false;
+                continue;
+            }
+            if (splitted[0] == "item")
+            {
+                int itemCount = 0;
+                foreach (int c in usedItemDict.Values)
+                {
+                    itemCount += c;
+                }
+
+                if (itemCount <= int.Parse(splitted[1]))
+                {
+                    achievedStar[i] = true;
+                }
+                else
+                {
+                    achievedStar[i] = false;
+                }
+                continue;
+
+            }
+            else if (splitted[0] == "move")
+            {
+                if (moveCount <= int.Parse(splitted[1]))
+                {
+                    achievedStar[i] = true;
+                }
+                else
+                {
+                    achievedStar[i] = false;
+                }
+                continue;
+            }
+            else
+            {
+                foreach (ItemData item in ItemData.getItemDataList())
+                {
+                    if (item.name == splitted[0])
+                    {
+                        if (usedItemDict[item] <= int.Parse(splitted[1]))
+                        {
+                            achievedStar[i] = true;
+                        }
+                        else
+                        {
+                            achievedStar[i] = false;
+                        }
+                        break;
+                    }
+                }
+                continue;
+            }
+
+        }
+
+
+        JsonData levelModeProgress = Storage.get("levelModeProgress");
+        for (int i = 0; i < 3; i++)
+        {
+            if ((bool)levelModeProgress[GlobalVar.Instance.level - 1][i + 2] == false)
+            {
+                levelModeProgress[GlobalVar.Instance.level - 1][i + 2] = achievedStar[i];
+            }
+        }
+        levelModeProgress[GlobalVar.Instance.level - 1][1] = true;
+
+        Storage.set("levelModeProgress", levelModeProgress);
+        for (int i = 0; i < 3; i++)
+        {
+            Debug.Log(
+                levelModeProgress[GlobalVar.Instance.level - 1][i + 2]
+            );
+        }
+
+        unlockLevel(GlobalVar.Instance.level + 1);
+
+
+
+        GlobalVar.Instance.gameData["achievedStar"] = achievedStar;
+
+        GlobalVar.Instance.gameData["levelType"] = "단계모드";
+
+
+    }
+
+    public static void unlockLevel(int level)
+    {
+        JsonData levelModeProgress = Storage.get("levelModeProgress");
+        levelModeProgress[level - 1][0] = true;
+        Storage.set("levelModeProgress", levelModeProgress);
+
+    }
+
 
 
     public void init()
     {
+
+        GameManage.isEditMode = initIsEditMode;
+
+
         moveCount = 0;
-        string json = Resources.Load("MapData").ToString();
-        // Debug.Log(JsonUtility.FromJson<MapDataList>(json).levels[0].map);
-
-        // JsonConvert.DeserializeObject<MapDataList>(json).levels[0].printMap();
-        // Debug.Log("level" + GlobalVar.Instance.level);
-
-        var jsonData = JsonMapper.ToObject(json);
-
-        Debug.Log(jsonData["levels"][0].GetType());
-
-        // var dict = Json.Deserialize(json) as Dictionary<string, object>;
-        // List<object> levels = dict["levels"] as List<object>;
-        mapInfo = new MapInfo();
+        selectedItem = null;
+        selectMode = SelectMode.normal;
 
 
-        // return;
-
-        if (GlobalVar.Instance == null)
+        if (!isEditMode)
         {
-            mapInfo.fromJson(jsonData["levels"][0]);
+
+            if (GlobalVar.Instance.gameMode == GameMode.levelMode)
+            {
+                JsonData jsonData = GlobalVar.Instance.jsonLevelDataList;
+                mapInfo = new MapInfo();
+                if (GlobalVar.Instance == null)
+                {
+                    mapInfo.fromJson(jsonData["levels"][0]);
+                }
+                else
+                {
+                    mapInfo.fromJson(jsonData["levels"][GlobalVar.Instance.level - 1]);
+                }
+
+                usedItemDict = new Dictionary<ItemData, int>();
+
+                foreach (ItemData item in ItemData.getItemDataList())
+                {
+                    usedItemDict.Add(item, 0);
+                }
+            }
+            else if (GlobalVar.Instance.gameMode == GameMode.editTestMode)
+            {
+                mapInfo = GlobalVar.Instance.editModeMapInfo;
+            }
+
+
         }
         else
         {
-            mapInfo.fromJson(jsonData["levels"][GlobalVar.Instance.level - 1]);
+
+            if (GlobalVar.Instance == null || GlobalVar.Instance.editModeMapInfo == null)
+            {
+                mapInfo = new MapInfo();
+                int initMapWidth = 5;
+                int initMapHeight = 5;
+                mapInfo.mapWidth = initMapWidth;
+                mapInfo.mapHeight = initMapHeight;
+                mapInfo.map = new int[initMapWidth, initMapHeight];
+                mapInfo.isolatedMap = new int[initMapWidth, initMapHeight];
+                mapInfo.confinedMap = new int[initMapWidth, initMapHeight];
+                mapInfo.items = new Dictionary<ItemData, int>();
+                foreach (ItemData item in ItemData.getItemDataList())
+                {
+                    mapInfo.items[item] = 0;
+
+                }
+                mapInfo.pStarCondition = new string[3] { "clear", "move 20", "move 15" };
+
+            }
+            else
+            {
+                mapInfo = GlobalVar.Instance.editModeMapInfo;
+            }
+
+
         }
 
-        usedItemDict = new Dictionary<ItemData, int>();
 
-        foreach (ItemData item in ItemData.getItemDataList())
-        {
-            usedItemDict.Add(item, 0);
-        }
 
 
 
         mapInfo.init();
-
-
-        // mapInfo.init(new Dictionary<string, dynamic>{
-        // {"map", new int[5, 5]{
-        //         {1, 2, 1, -1, 2},
-        //         {4, 0, 1, 1, 999999},
-        //         {101, 1, 1, 0, 0},
-        //         {0, 101, -1, 1, 1},
-        //         {101, 1, 0, -1, 2},
-        //         }},{"mapWidth" , 5}, {"mapHeight" , 5},
-        //         {"isolatedMap", new int[5, 5]{
-        //         {0, 0, 0, 0, 0},
-        //         {1, 0, 0, 0, 0},
-        //         {0, 0, 0, 1, 0},
-        //         {1, 0, 0, 0, 0},
-        //         {0, 0, 0, 0, 0},
-        //         }}, {"confinedMap", new int[5, 5]{
-        //         {1, 1, 0, 0, 0},
-        //         {0, 0, 0, 0, 0},
-        //         {0, 0, 0, 0, 0},
-        //         {0, 0, 0, 1, 1},
-        //         {0, 0, 0, 0, 1},
-        //         }}
-
-        // });
-        // mapInfo.init(new Dictionary<string, dynamic>{
-        // {"map", new int[4, 4]{
-        //         {0, 0, 1, -1},
-        //         {2, 0, 101, 999999},
-        //         {0, 1, 1, -1},
-        //         {-1, 1, 1, -1}
-        //         }},{"mapWidth" , 4}, {"mapHeight" , 4}
 
         // });
         blocks = new Block[mapInfo.mapWidth, mapInfo.mapHeight];
@@ -483,40 +655,8 @@ public class GameManage : MonoBehaviour
             }
         }
 
-        selectedItem = null;
-        selectMode = SelectMode.normal;
 
 
-        int k = 0;
-        var availableItemList = new List<ItemData>(mapInfo.items.Keys).Where(x => mapInfo.items[x] != 0).ToList();
-
-        foreach (ItemData item in availableItemList)
-        {
-            GameObject itemButton = Instantiate(itemButtonPrefab);
-            itemButton.transform.SetParent(canvas.transform);
-            itemButton.transform.localScale = new Vector3(1f, 1f, 1f);
-
-            Vector3 buttonPos = new Vector3(-(availableItemList.Count - 1) * (250 / 2) + k * 250,
-             -GlobalVar.canvasHeight / 2 + 200, 0f);
-
-            itemButton.GetComponent<RectTransform>().anchoredPosition = buttonPos;
-            itemButton.GetComponent<ItemButton>().init(item);
-
-            k++;
-        }
-
-
-        GameObject upperStatusContainer = canvas.GetComponentsInChildren<Transform>()
-                             .FirstOrDefault(c => c.gameObject.name == "UpperStatusContainer")?.gameObject;
-
-        for (int i = 0; i < 3; i++)
-        {
-            GameObject starConditionSquare = Instantiate(starConditionSquarePrefab);
-            starConditionSquare.transform.SetParent(upperStatusContainer.transform);
-            starConditionSquare.transform.localScale = new Vector3(1.5f, 1.5f, 1.5f);
-            starConditionSquare.GetComponent<RectTransform>().anchoredPosition = new Vector3(-(2 - i) * 180 - 50, -12, 0);
-            starConditionSquare.transform.GetChild(1).GetComponent<Text>().text = getShortStarConditionText(mapInfo.pStarCondition[i]);
-        }
 
 
     }
@@ -539,7 +679,9 @@ public class GameManage : MonoBehaviour
         if (splitted[0] == "item")
         {
             result += "아이템";
-        }else if(splitted[0] == "move"){
+        }
+        else if (splitted[0] == "move")
+        {
             result += "이동";
         }
         else
@@ -577,6 +719,21 @@ public class GameManage : MonoBehaviour
     // Start is called before the first frame update
     void Awake()
     {
+
+        //Check if instance already exists
+        if (Instance == null)
+        {
+            //if not, set instance to this
+            Instance = this;
+        }
+        //If instance already exists and it's not this:
+        else if (Instance != this)
+        {
+            //Then destroy this. This enforces our singleton pattern, meaning there can only ever be one instance of a GameManager.
+            Destroy(gameObject);
+        }
+
+
         init();
 
 
@@ -597,63 +754,99 @@ public class GameManage : MonoBehaviour
                 int mapValue = mapInfo.getMapValue(i, j);
                 LandType landType = mapInfo.getLandType(i, j);
                 int landPeopleCount = mapInfo.getLandPeopleCount(i, j);
-                if (landType != LandType.air)
+                GameObject block;
+                if (mapInfo.isIsolatedLand(i, j) && !GameManage.isEditMode)
                 {
+                    // isolated 공간이면 0.5만큼 아래에 위치.
 
-                    // 땅 렌더링
-
-                    GameObject block;
-                    if (mapInfo.isIsolatedLand(i, j))
-                    {
-                        // isolated 공간이면 0.5만큼 아래에 위치.
-
-                        block = Instantiate(blockPrefab, new Vector3(j, -(landHeight / 2), mapInfo.mapHeight - i - 1), Quaternion.identity);
-                        // block.moveTo(new Vector3(j, (landHeight / 2) - 0.5f, mapInfo.mapHeight - i - 1));
-                    }
-                    else
-                    {
-                        block = Instantiate(blockPrefab, new Vector3(j, -(landHeight / 2), mapInfo.mapHeight - i - 1), Quaternion.identity);
-                        // block.moveTo(new Vector3(j, (landHeight / 2), mapInfo.mapHeight - i - 1));
-                    }
-
-
-                    blocks[i, j] = block.GetComponent<Block>();
-                    blocks[i, j].init(i, j);
-                    lands[i, j] = blocks[i, j].getLand();
-
-                    // person, player 렌더링
-                    if (landType == LandType.person || landType == LandType.player)
-
-                    {
-                        GameObject renderPrefab = landType == LandType.person ? personPrefab : playerPrefab;
-                        for (int k = 0; k < landPeopleCount; k++)
-                        {
-
-
-                            GameObject person = Instantiate(renderPrefab, new Vector3(j, landHeight + 0.3f, mapInfo.mapHeight - i - 1), Quaternion.identity);
-                            persons[i, j].Add(person.GetComponent<Person>());
-                            int idx = k;
-                            persons[i, j][idx].move(i, j, idx, landPeopleCount);
-                            persons[i, j][idx].init(landType == LandType.player);
-
-
-                        }
-                    }
-
-
+                    block = Instantiate(blockPrefab, new Vector3(j, -(landHeight / 2), mapInfo.mapHeight - i - 1), Quaternion.identity);
+                    // block.moveTo(new Vector3(j, (landHeight / 2) - 0.5f, mapInfo.mapHeight - i - 1));
                 }
                 else
                 {
-                    blocks[i, j] = null;
-                    lands[i, j] = null;
+                    block = Instantiate(blockPrefab, new Vector3(j, -(landHeight / 2), mapInfo.mapHeight - i - 1), Quaternion.identity);
+                    // block.moveTo(new Vector3(j, (landHeight / 2), mapInfo.mapHeight - i - 1));
                 }
+
+
+                blocks[i, j] = block.GetComponent<Block>();
+                blocks[i, j].init(i, j);
+                lands[i, j] = blocks[i, j].getLand();
+
+                // person, player 렌더링
+                if (landType == LandType.person || landType == LandType.player)
+
+                {
+                    GameObject renderPrefab = landType == LandType.person ? personPrefab : playerPrefab;
+                    for (int k = 0; k < landPeopleCount; k++)
+                    {
+
+
+                        GameObject person = Instantiate(renderPrefab, new Vector3(j, landHeight + 0.3f, mapInfo.mapHeight - i - 1), Quaternion.identity);
+                        persons[i, j].Add(person.GetComponent<Person>());
+                        int idx = k;
+                        persons[i, j][idx].move(i, j, idx, landPeopleCount);
+                        persons[i, j][idx].init(landType == LandType.player);
+
+
+                    }
+                }
+                if (landType == LandType.air)
+                {
+
+                    // 땅 렌더링
+                    block.GetComponent<Block>().deactive();
+
+
+
+                }
+
             }
         }
 
         // goal 렌더링
-        GameObject goal = Instantiate(goalPrefab, new Vector3(mapInfo.goalPos.y, landHeight + 0.85f, mapInfo.mapHeight - mapInfo.goalPos.x - 1), Quaternion.identity);
+        if (!(mapInfo.goalPos.x == -1 && mapInfo.goalPos.y == -1))
+        {
+
+            goal = Instantiate(goalPrefab, new Vector3(mapInfo.goalPos.y, landHeight + 0.85f, mapInfo.mapHeight - mapInfo.goalPos.x - 1), Quaternion.identity).GetComponent<Goal>();
+
+        }
 
 
+        if (!isEditMode)
+        {
+            int k = 0;
+            var availableItemList = new List<ItemData>(mapInfo.items.Keys).Where(x => mapInfo.items[x] != 0).ToList();
+
+            foreach (ItemData item in availableItemList)
+            {
+                GameObject itemButton = Instantiate(itemButtonPrefab);
+                itemButton.transform.SetParent(canvas.transform);
+                itemButton.transform.localScale = new Vector3(1f, 1f, 1f);
+
+                Vector3 buttonPos = new Vector3(-(availableItemList.Count - 1) * (250 / 2) + k * 250,
+                 -GlobalVar.canvasHeight / 2 + 200, 0f);
+
+                itemButton.GetComponent<RectTransform>().anchoredPosition = buttonPos;
+                itemButton.GetComponent<ItemButton>().init(item);
+
+                k++;
+            }
+
+
+            GameObject upperStatusContainer = canvas.GetComponentsInChildren<Transform>()
+                                 .FirstOrDefault(c => c.gameObject.name == "UpperStatusContainer")?.gameObject;
+
+            for (int i = 0; i < 3; i++)
+            {
+                GameObject starConditionSquare = Instantiate(starConditionSquarePrefab);
+                starConditionSquare.transform.SetParent(upperStatusContainer.transform);
+                starConditionSquare.transform.localScale = new Vector3(1.5f, 1.5f, 1.5f);
+                starConditionSquare.GetComponent<RectTransform>().anchoredPosition = new Vector3(-(2 - i) * 180 - 50, -12, 0);
+                starConditionSquare.transform.GetChild(1).GetComponent<Text>().text = getShortStarConditionText(mapInfo.pStarCondition[i]);
+            }
+
+        }
 
 
 
@@ -674,6 +867,7 @@ public class GameManage : MonoBehaviour
             {
                 if (hit.collider.gameObject.tag == "Land") // land 클릭했을 때
                 {
+
                     hit.collider.gameObject.GetComponent<Land>().onClick();
 
                 }
@@ -703,10 +897,413 @@ public class GameManage : MonoBehaviour
         {
             selectItem(ItemData.diagonal);
         }
+        if (Input.GetKeyDown(KeyCode.Q))
+        {
+            changeSelectedEditMode(EditMode.deleteBlock);
+        }
+        if (Input.GetKeyDown(KeyCode.W))
+        {
+            changeSelectedEditMode(EditMode.makeBlock);
+        }
+        if (Input.GetKeyDown(KeyCode.E))
+        {
+            changeSelectedEditMode(EditMode.makeIsolate);
+        }
+        if (Input.GetKeyDown(KeyCode.R))
+        {
+            changeSelectedEditMode(EditMode.makeConfine);
+        }
+        if (Input.GetKeyDown(KeyCode.A))
+        {
+            changeSelectedEditMode(EditMode.eraser);
+        }
+        if (Input.GetKeyDown(KeyCode.S))
+        {
+            changeSelectedEditMode(EditMode.makePlayer);
+        }
+        if (Input.GetKeyDown(KeyCode.D))
+        {
+            changeSelectedEditMode(EditMode.makePerson);
+        }
+        if (Input.GetKeyDown(KeyCode.F))
+        {
+            changeSelectedEditMode(EditMode.makeGoal);
+        }
+        if (Input.GetKeyDown(KeyCode.Z))
+        {
+            goLevelTestMode();
+        }
+        if (Input.GetKeyDown(KeyCode.X))
+        {
+            goEditLevelMode();
+        }
     }
 
 
-    public static void restartGame(){
+    public static void goLevelTestMode()
+    {
+        if (GameManage.isEditMode)
+        {
+            GlobalVar.Instance.editModeMapInfo = mapInfo.getCopiedMapInfo();
+            GlobalVar.Instance.gameMode = GameMode.editTestMode;
+            SceneManager.LoadScene("GameScene");
+        }
+
+    }
+
+    public static void goEditLevelMode()
+    {
+        if (!GameManage.isEditMode)
+        {
+            SceneManager.LoadScene("MapEditScene");
+        }
+
+    }
+
+
+
+    public static void changeSelectedEditMode(EditMode editMode_)
+    {
+        if (editMode == editMode_)
+        {
+            editMode = EditMode.none;
+        }
+        else
+        {
+            editMode = editMode_;
+        }
+        refreshEditSelectable();
+    }
+
+
+    public static void refreshEditSelectable()
+    {
+        if (editMode == EditMode.deleteBlock)
+        {
+            for (int i = 0; i < mapInfo.mapWidth; i++)
+            {
+                for (int j = 0; j < mapInfo.mapHeight; j++)
+                {
+                    lands[i, j].isEditSelectable = false;
+                    LandType landType = mapInfo.getLandType(i, j);
+
+                    if (landType != LandType.air)
+                    {
+                        lands[i, j].isEditSelectable = true;
+                    }
+                }
+            }
+        }
+        else if (editMode == EditMode.makeBlock)
+        {
+            for (int i = 0; i < mapInfo.mapWidth; i++)
+            {
+                for (int j = 0; j < mapInfo.mapHeight; j++)
+                {
+                    lands[i, j].isEditSelectable = false;
+                    LandType landType = mapInfo.getLandType(i, j);
+
+                    if (landType == LandType.air || mapInfo.isIsolatedLand(i, j) || mapInfo.isConfinedLand(i, j))
+                    {
+                        lands[i, j].isEditSelectable = true;
+                    }
+                }
+            }
+        }
+        else if (editMode == EditMode.makeIsolate)
+        {
+            for (int i = 0; i < mapInfo.mapWidth; i++)
+            {
+                for (int j = 0; j < mapInfo.mapHeight; j++)
+                {
+                    lands[i, j].isEditSelectable = false;
+                    LandType landType = mapInfo.getLandType(i, j);
+
+                    if (landType != LandType.air)
+                    {
+                        lands[i, j].isEditSelectable = true;
+                    }
+                }
+            }
+        }
+        else if (editMode == EditMode.makeConfine)
+        {
+            for (int i = 0; i < mapInfo.mapWidth; i++)
+            {
+                for (int j = 0; j < mapInfo.mapHeight; j++)
+                {
+                    lands[i, j].isEditSelectable = false;
+                    LandType landType = mapInfo.getLandType(i, j);
+
+                    if (landType != LandType.air)
+                    {
+                        lands[i, j].isEditSelectable = true;
+                    }
+                }
+            }
+        }
+        else if (editMode == EditMode.eraser)
+        {
+            for (int i = 0; i < mapInfo.mapWidth; i++)
+            {
+                for (int j = 0; j < mapInfo.mapHeight; j++)
+                {
+                    lands[i, j].isEditSelectable = false;
+                    LandType landType = mapInfo.getLandType(i, j);
+
+                    if (landType == LandType.person || landType == LandType.goal || landType == LandType.player)
+                    {
+                        lands[i, j].isEditSelectable = true;
+                    }
+                }
+            }
+        }
+        else if (editMode == EditMode.makePerson || editMode == EditMode.makePlayer)
+        {
+            for (int i = 0; i < mapInfo.mapWidth; i++)
+            {
+                for (int j = 0; j < mapInfo.mapHeight; j++)
+                {
+                    lands[i, j].isEditSelectable = false;
+                    LandType landType = mapInfo.getLandType(i, j);
+
+                    if (landType != LandType.air)
+                    {
+                        if ((editMode != EditMode.makePlayer && mapInfo.getLandType(i, j) == LandType.player)
+                        || (editMode != EditMode.makePerson && mapInfo.getLandType(i, j) == LandType.person))
+                        {
+
+                        }
+                        else
+                        {
+                            if (!(mapInfo.goalPos.x == i && mapInfo.goalPos.y == j))
+                            {
+                                if (mapInfo.getLandPeopleCount(i, j) < 9)
+                                {
+                                    lands[i, j].isEditSelectable = true;
+                                }
+
+                            }
+                        }
+
+
+
+                    }
+                }
+            }
+        }
+        else if (editMode == EditMode.makeGoal)
+        {
+            for (int i = 0; i < mapInfo.mapWidth; i++)
+            {
+                for (int j = 0; j < mapInfo.mapHeight; j++)
+                {
+                    lands[i, j].isEditSelectable = false;
+                    LandType landType = mapInfo.getLandType(i, j);
+
+                    if (landType == LandType.block)
+                    {
+                        lands[i, j].isEditSelectable = true;
+                    }
+                }
+            }
+        }
+        else if (editMode == EditMode.none)
+        {
+            for (int i = 0; i < mapInfo.mapWidth; i++)
+            {
+                for (int j = 0; j < mapInfo.mapHeight; j++)
+                {
+                    if (lands[i, j] != null)
+                    {
+                        lands[i, j].isEditSelectable = false;
+                    }
+                }
+            }
+        }
+    }
+
+
+    public static void editExecute(int x, int y)
+    {
+        // bool prevIsEditSelectable = isEditSelectable;
+        if (lands[x, y].isEditSelectable)
+        {
+
+            if (editMode == EditMode.deleteBlock)
+            {
+
+
+                Block block = blocks[x, y];
+                Land land = lands[x, y];
+
+                block.deactive();
+                // lands[x, y] = null;
+                mapInfo.map[x, y] = -1;
+                mapInfo.isolatedMap[x, y] = 0;
+                mapInfo.confinedMap[x, y] = 0;
+                foreach (Person p in persons[x, y])
+                {
+                    p.gameObject.SetActive(false);
+
+                }
+                persons[x, y].Clear();
+
+                if (mapInfo.goalPos.x == x && mapInfo.goalPos.y == y)
+                {
+                    mapInfo.goalPos = new Vector2Int(-1, -1);
+                    goal.gameObject.SetActive(false);
+                }
+
+            }
+            else if (editMode == EditMode.makeBlock)
+            {
+
+
+                Block block = blocks[x, y];
+                Land land = lands[x, y];
+
+                block.active();
+                // lands[x, y] = null;
+                mapInfo.map[x, y] = 0;
+                mapInfo.isolatedMap[x, y] = 0;
+                mapInfo.confinedMap[x, y] = 0;
+                lands[x, y].isIsolated = false;
+                lands[x, y].isConfined = false;
+
+            }
+            else if (editMode == EditMode.makeIsolate)
+            {
+
+
+                Block block = blocks[x, y];
+                Land land = lands[x, y];
+
+                if (mapInfo.isIsolatedLand(x, y))
+                {
+                    mapInfo.isolatedMap[x, y] = 0;
+                    lands[x, y].isIsolated = false;
+                }
+                else
+                {
+                    mapInfo.isolatedMap[x, y] = 1;
+                    lands[x, y].isIsolated = true;
+                }
+
+
+
+
+            }
+            else if (editMode == EditMode.makeConfine)
+            {
+
+
+                Block block = blocks[x, y];
+                Land land = lands[x, y];
+
+                if (mapInfo.isConfinedLand(x, y))
+                {
+                    mapInfo.confinedMap[x, y] = 0;
+                    lands[x, y].isConfined = false;
+
+                }
+                else
+                {
+                    mapInfo.confinedMap[x, y] = 1;
+                    lands[x, y].isConfined = true;
+                }
+
+
+
+            }
+            else if (editMode == EditMode.eraser)
+            {
+                LandType landType = mapInfo.getLandType(x, y);
+                mapInfo.map[x, y] = 0;
+                if (landType == LandType.person || landType == LandType.player)
+                {
+
+                    foreach (Person p in persons[x, y])
+                    {
+                        p.gameObject.SetActive(false);
+                    }
+                    persons[x, y].Clear();
+                }
+                else if (landType == LandType.goal)
+                {
+                    mapInfo.goalPos = new Vector2Int(-1, -1);
+                    goal.gameObject.SetActive(false);
+                }
+            }
+            else if (editMode == EditMode.makePerson || editMode == EditMode.makePlayer)
+            {
+
+
+                Block block = blocks[x, y];
+                Land land = lands[x, y];
+
+                if (editMode == EditMode.makePlayer && mapInfo.map[x, y] == 0)
+                {
+                    mapInfo.map[x, y] = 100;
+                }
+                mapInfo.map[x, y] += 1;
+                LandType landType = editMode == EditMode.makePerson ? LandType.person : LandType.player;
+
+                GameObject renderPrefab = landType == LandType.person ? GameManage.Instance.personPrefab : GameManage.Instance.playerPrefab;
+                GameObject person = Instantiate(renderPrefab, new Vector3(y, 6.0f + 0.3f, mapInfo.mapHeight - x - 1), Quaternion.identity);
+
+
+
+
+                foreach (Person p in persons[x, y])
+                {
+                    p.move(x, y, p.idx, p.cnt + 1);
+                }
+
+
+
+                persons[x, y].Add(person.GetComponent<Person>());
+                int idx = persons[x, y].Count - 1;
+                persons[x, y][idx].move(x, y, idx, persons[x, y].Count);
+                persons[x, y][idx].init(landType == LandType.player);
+
+
+
+            }
+            else if (editMode == EditMode.makeGoal)
+            {
+                if (goal != null)
+                {
+                    goal.gameObject.SetActive(false);
+                }
+                if (mapInfo.goalPos.x != -1 && mapInfo.goalPos.y != -1)
+                {
+                    mapInfo.map[mapInfo.goalPos.x, mapInfo.goalPos.y] = 0;
+                }
+
+
+                mapInfo.goalPos = new Vector2Int(x, y);
+                mapInfo.map[x, y] = 999999;
+                goal = Instantiate(GameManage.Instance.goalPrefab, new Vector3(mapInfo.goalPos.y, 6.0f + 0.85f, mapInfo.mapHeight - mapInfo.goalPos.x - 1), Quaternion.identity).GetComponent<Goal>();
+
+
+            }
+
+
+        }
+        else
+        {
+            GameManage.editMode = EditMode.none;
+        }
+
+        highlightAllViolate();
+
+        GameManage.refreshEditSelectable();
+    }
+
+
+    public static void restartGame()
+    {
         SceneManager.LoadScene("GameScene");
     }
 }

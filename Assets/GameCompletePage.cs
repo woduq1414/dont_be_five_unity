@@ -9,6 +9,8 @@ using System.Linq;
 public class GameCompletePage : MonoBehaviour
 {
     public GameObject canvas;
+    public GameObject starPrefab;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -25,12 +27,29 @@ public class GameCompletePage : MonoBehaviour
         listButton.GetComponent<Button>().onClick.AddListener(goLevelList);
 
 
+        GameObject levelResultWrapper = canvas.GetComponentsInChildren<Transform>()
+                                 .FirstOrDefault(c => c.gameObject.name == "LevelResultWrapper")?.gameObject;
+
+        levelResultWrapper.transform.GetChild(0).GetComponent<Text>().text = GlobalVar.Instance.gameData["levelType"];
+        levelResultWrapper.transform.GetChild(1).GetComponent<Text>().text = GlobalVar.Instance.level.ToString() + " 단계";
+
+        for (int i = 0; i < 3; i++)
+        {
+            bool isStarAchieved = GlobalVar.Instance.gameData["achievedStar"][i];
+            GameObject star = Instantiate(starPrefab);
+            star.transform.SetParent(levelResultWrapper.transform);
+            star.transform.localScale = new Vector3(1.4f, 1.4f, 1.4f);
+            star.GetComponent<RectTransform>().anchoredPosition = new Vector3((i - 1) * 150, -320, 0);
+            star.GetComponent<Image>().color = isStarAchieved ? Colors.achievedStarColor : Colors.notAchievedStarColor;
+        }
+
 
     }
 
 
-    public void goLevelList(){
-         SceneManager.LoadScene("LevelSelectScene");
+    public void goLevelList()
+    {
+        SceneManager.LoadScene("LevelSelectScene");
     }
 
     public void goNextLevel()
