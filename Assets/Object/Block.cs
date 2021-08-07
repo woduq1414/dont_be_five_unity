@@ -48,7 +48,7 @@ public class Block : MonoBehaviour
         transform.GetChild(0).GetComponent<Land>().init(x, y);
 
 
-        if (mapInfo.isIsolatedLand(x, y) == true)
+        if (mapInfo.isIsolatedLand(x, y) == true && !GameManage.isEditMode)
         {
             moveTo(new Vector3(transform.position.x, (6 / 2) - 0.7f, transform.position.z));
         }

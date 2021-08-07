@@ -20,4 +20,7 @@ public class ImagePath
     public static string vaccine = "Icons/vaccine";
     public static string diagonal = "Icons/diagonal";
 
+
+    
+
 }

@@ -36,7 +36,7 @@ public class ItemButton : MonoBehaviour
     {
         item = _item;
 
-        transform.GetChild(0).GetComponent<Image>().sprite = Resources.Load<Sprite>("Icons/" + item.name);
+        transform.GetChild(0).GetComponent<Image>().sprite = Resources.Load<Sprite>("Icons/" + item.name + "Square");
     }
 
 
@@ -60,7 +60,7 @@ public class ItemButton : MonoBehaviour
             itemBottomImage.color = new Color(0.8f, 0.8f, 0.8f);
         }
 
-        if (GameManage.mapInfo.items != null)
+        if (GameManage.mapInfo.items != null && GameManage.usedItemDict != null)
         {
             // remainItemCountText.text = (GameManage.mapInfo.items[item]).ToString();
             

@@ -326,13 +326,13 @@ public class Land : MonoBehaviour
 
                         Debug.Log("Game Finished");
 
-                        GameManage.gameFinished();
+
                         StartCoroutine(WaitForNextLevel());
                         IEnumerator WaitForNextLevel()
                         {
                             yield return new WaitForSeconds(0.5f);
-
-                            SceneManager.LoadScene("GameCompleteScene");
+                            GameManage.gameFinished();
+                            // SceneManager.LoadScene("GameCompleteScene");
 
                             // GlobalVar.Instance.setNextLevel();
                             // SceneManager.LoadScene("GameScene");

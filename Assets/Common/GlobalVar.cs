@@ -70,6 +70,9 @@ public class GlobalVar : MonoBehaviour
         {
             Instance = this;
             DontDestroyOnLoad(gameObject);
+
+            // Screen.SetResolution(screenWidth, canvasHeight, true);
+
         }
     }
     void Update()

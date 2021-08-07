@@ -6,8 +6,8 @@ using LitJson;
 [System.Serializable]
 public class MapInfo
 {
-    public int mapWidth;
     public int mapHeight;
+    public int mapWidth;
     public int[,] map;
 
     public int[,] isolatedMap;
@@ -24,19 +24,19 @@ public class MapInfo
 
     public void fromJson(JsonData json)
     {
-        mapWidth = (int)json["mapWidth"];
-        mapHeight = (int)json["mapHeight"];
+        mapHeight = (int)json["mapWidth"];
+        mapWidth = (int)json["mapHeight"];
 
         bool isIsolatedMapExist = json.ContainsKey("isolatedMap");
         bool isConfinedMapExist = json.ContainsKey("confinedMap");
 
-        map = new int[mapWidth, mapHeight];
-        isolatedMap = new int[mapWidth, mapHeight];
-        confinedMap = new int[mapWidth, mapHeight];
+        map = new int[mapHeight, mapWidth];
+        isolatedMap = new int[mapHeight, mapWidth];
+        confinedMap = new int[mapHeight, mapWidth];
 
-        for (int i = 0; i < mapWidth; i++)
+        for (int i = 0; i < mapHeight; i++)
         {
-            for (int j = 0; j < mapHeight; j++)
+            for (int j = 0; j < mapWidth; j++)
             {
                 map[i, j] = (int)json["map"][i][j];
                 if (isIsolatedMapExist)
@@ -91,17 +91,17 @@ public class MapInfo
 
     public JsonData toJson()
     {
-        Debug.Log(mapWidth + "/" + mapHeight);
+        Debug.Log(mapHeight + "/" + mapWidth);
         JsonData json = new JsonData();
-        json["mapWidth"] = mapWidth;
-        json["mapHeight"] = mapHeight;
+        json["mapWidth"] = mapHeight;
+        json["mapHeight"] = mapWidth;
         json["map"] = new JsonData();
         json["map"].SetJsonType(JsonType.Array);
-        for (int i = 0; i < mapWidth; i++)
+        for (int i = 0; i < mapHeight; i++)
         {
             json["map"].Add(new JsonData());
             json["map"][i].SetJsonType(JsonType.Array);
-            for (int j = 0; j < mapHeight; j++)
+            for (int j = 0; j < mapWidth; j++)
             {
                 json["map"][i].Add(map[i, j]);
             }
@@ -112,11 +112,11 @@ public class MapInfo
         {
             json["isolatedMap"] = new JsonData();
             json["isolatedMap"].SetJsonType(JsonType.Array);
-            for (int i = 0; i < mapWidth; i++)
+            for (int i = 0; i < mapHeight; i++)
             {
                 json["isolatedMap"].Add(new JsonData());
                 json["isolatedMap"][i].SetJsonType(JsonType.Array);
-                for (int j = 0; j < mapHeight; j++)
+                for (int j = 0; j < mapWidth; j++)
                 {
                     json["isolatedMap"][i].Add(isolatedMap[i, j]);
                 }
@@ -128,11 +128,11 @@ public class MapInfo
         {
             json["confinedMap"] = new JsonData();
             json["confinedMap"].SetJsonType(JsonType.Array);
-            for (int i = 0; i < mapWidth; i++)
+            for (int i = 0; i < mapHeight; i++)
             {
                 json["confinedMap"].Add(new JsonData());
                 json["confinedMap"][i].SetJsonType(JsonType.Array);
-                for (int j = 0; j < mapHeight; j++)
+                for (int j = 0; j < mapWidth; j++)
                 {
                     json["confinedMap"][i].Add(confinedMap[i, j]);
                 }
@@ -162,7 +162,7 @@ public class MapInfo
                 json["pStarCondition"].Add(pStarCondition[i]);
             }
         }
-
+        Debug.Log(json.ToJson());
         return json;
     }
 
@@ -178,7 +178,7 @@ public class MapInfo
     public bool isIsolatedLand(int x, int y)
     {
 
-        if (x < 0 || y < 0 || x >= mapWidth || y >= mapHeight)
+        if (x < 0 || y < 0 || x >= mapHeight || y >= mapWidth)
         {
             return false;
         }
@@ -195,7 +195,7 @@ public class MapInfo
     public bool isConfinedLand(int x, int y)
     {
 
-        if (x < 0 || y < 0 || x >= mapWidth || y >= mapHeight)
+        if (x < 0 || y < 0 || x >= mapHeight || y >= mapWidth)
         {
             return false;
         }
@@ -218,8 +218,8 @@ public class MapInfo
         if (mapDataDict != null)
         {
 
-            mapWidth = mapDataDict["mapWidth"];
-            mapHeight = mapDataDict["mapHeight"];
+            mapHeight = mapDataDict["mapWidth"];
+            mapWidth = mapDataDict["mapHeight"];
             map = mapDataDict["map"];
             isolatedMap = mapDataDict["isolatedMap"];
             confinedMap = mapDataDict["confinedMap"];
@@ -231,9 +231,9 @@ public class MapInfo
         // Debug.Log(items[k]);
         // }
 
-        for (int i = 0; i < mapWidth; i++)
+        for (int i = 0; i < mapHeight; i++)
         {
-            for (int j = 0; j < mapHeight; j++)
+            for (int j = 0; j < mapWidth; j++)
             {
                 if (map[i, j] == 999999)
                 {
@@ -246,12 +246,12 @@ public class MapInfo
 
         if (isolatedMap == null)
         {
-            isolatedMap = new int[mapWidth, mapHeight];
+            isolatedMap = new int[mapHeight, mapWidth];
         }
 
         if (confinedMap == null)
         {
-            confinedMap = new int[mapWidth, mapHeight];
+            confinedMap = new int[mapHeight, mapWidth];
         }
 
 
@@ -260,10 +260,10 @@ public class MapInfo
 
     public int[,] getCopiedMap()
     {
-        int[,] copiedMap = new int[mapWidth, mapHeight];
-        for (int i = 0; i < mapWidth; i++)
+        int[,] copiedMap = new int[mapHeight, mapWidth];
+        for (int i = 0; i < mapHeight; i++)
         {
-            for (int j = 0; j < mapHeight; j++)
+            for (int j = 0; j < mapWidth; j++)
             {
                 copiedMap[i, j] = map[i, j];
             }
@@ -276,7 +276,7 @@ public class MapInfo
     public int getMapValue(int x, int y)
     {
 
-        if (x < 0 || y < 0 || x >= mapWidth || y >= mapHeight)
+        if (x < 0 || y < 0 || x >= mapHeight || y >= mapWidth)
         {
             return -1;
         }
@@ -375,9 +375,9 @@ public class MapInfo
 
     public bool isAllPlayerGoal()
     {
-        for (int i = 0; i < mapWidth; i++)
+        for (int i = 0; i < mapHeight; i++)
         {
-            for (int j = 0; j < mapHeight; j++)
+            for (int j = 0; j < mapWidth; j++)
             {
                 if (getLandType(i, j) == LandType.player)
                 {

@@ -569,7 +569,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 19dc8ac8e73092b48ae8752cccf5e019, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 1042e20b99ee7d942a47a1202bd17a5c, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -680,6 +680,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 58f6a50646251fc438929938af188910, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  initIsEditMode: 0
   blockPrefab: {fileID: 5198970938171759017, guid: 635af8ec2a5749d4db0e4005d635c345,
     type: 3}
   personPrefab: {fileID: 4503727344378865206, guid: db98183ebaff9654dba3cba483f8a790,
@@ -963,6 +964,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 97e04dccf01ca1443883eead312cd221, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  editModeMapInfo:
+    mapWidth: 0
+    mapHeight: 0
+    pStarCondition: []
+    goalPos: {x: -1, y: -1}
 --- !u!4 &2096164696
 Transform:
   m_ObjectHideFlags: 0
