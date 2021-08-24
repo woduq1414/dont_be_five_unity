@@ -237,22 +237,22 @@ public class Land : MonoBehaviour
                                     int oldCount = persons[x, y].Count;
                                     int newCount = persons[x, y].Count + persons[i, j].Count;
 
-                                    int[,] prevMap = mapInfo.getCopiedMap();
+                                    int[,] prevMap = mapInfo.getCopiedMap(); // Deep Copy해야 이전 맵 정보 저장 가능
 
-                                    if (mapInfo.getLandType(x, y) == LandType.block)
+                                    if (mapInfo.getLandType(x, y) == LandType.block) // 만약 사람이 없는 블록으로 이동한다면
                                     {
                                         mapInfo.map[x, y] = mapInfo.map[i, j];
                                     }
-                                    else
+                                    else // 사람이 있는 블록이면
                                     {
                                         mapInfo.map[x, y] += newCount - oldCount;
                                     }
-                                    mapInfo.map[i, j] = 0;
+                                    mapInfo.map[i, j] = 0; // 기존에 선택된 위치의 블록에는 사람이 없기 때문에 0
 
-                                    isViolate = GameManage.highlightAroundViolate(x, y);
-                                    if (isViolate)
+                                    isViolate = GameManage.highlightAroundViolate(x, y); // 집합금지룰 어겼는지 확인
+                                    if (isViolate) // 집합금지룰 어겼다면
                                     {
-                                        mapInfo.map = prevMap;
+                                        mapInfo.map = prevMap; // 이전 맵 정보로 복구
                                     }
 
 
@@ -319,7 +319,7 @@ public class Land : MonoBehaviour
 
 
                     bool isGameFinished = mapInfo.isAllPlayerGoal();
-                    if (isGameFinished && !isViolate)
+                    if (isGameFinished && !isViolate) // 게임 종료 체크
                     {
 
 
@@ -394,7 +394,7 @@ public class Land : MonoBehaviour
                         LandType targetLandType = mapInfo.getLandType(x + d.x, y + d.y);
                         if ((targetLandType == LandType.block || targetLandType == landType) && !mapInfo.isIsolatedLand(x + d.x, y + d.y))
                         {
-                            if (!(mapInfo.isConfinedLand(x, y) == true && mapInfo.isConfinedLand(x + d.x, y + d.y) == false))
+                            if (!(mapInfo.isConfinedLand(x, y) == true && mapInfo.isConfinedLand(x + d.x, y + d.y) == false)) // 외출금지 타일 케이스 고려
                             {
 
                                 lands[x + d.x, y + d.y].isSelectable = true;
@@ -428,10 +428,6 @@ public class Land : MonoBehaviour
         else
         {
             GameManage.editExecute(x, y);
-
-
-
-
 
 
 

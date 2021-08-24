@@ -196,7 +196,7 @@ public class GameManage : MonoBehaviour
         selectedItem = null;
     }
 
-
+    // (x, y) 주변 상하좌우에 규칙위반 타일이 있는 지 확인
     public static bool highlightAroundViolate(int x, int y)
     {
 
@@ -234,7 +234,7 @@ public class GameManage : MonoBehaviour
         return isViolate;
     }
 
-
+    // 전체 맵에서 규칙위반 타일이 있는 지 확인
     public static void highlightAllViolate()
     {
 
@@ -278,7 +278,7 @@ public class GameManage : MonoBehaviour
         }
     }
 
-
+    // 빨갛게 표시한 규칙위반 타일 다시 복구
     public static void unpaintViolateHighlight(HashSet<Vector2Int> violateLandSet)
     {
         if (!instance)
@@ -302,6 +302,7 @@ public class GameManage : MonoBehaviour
         }
     }
 
+    // 사용할 아이템 선택
     public static bool selectItem(ItemData item)
     {
 
@@ -432,6 +433,7 @@ public class GameManage : MonoBehaviour
         }
     }
 
+    // 선택된 아이템 취소
     public static void cancelItem()
     {
 
@@ -452,6 +454,7 @@ public class GameManage : MonoBehaviour
         selectedItem = null;
     }
 
+    // 게임 종료 시 처리
     public static void gameFinished()
     {
         GlobalVar.Instance.gameData["achievedStar"] = new bool[3];
@@ -570,6 +573,7 @@ public class GameManage : MonoBehaviour
 
     }
 
+    // 다음 레벨 언락
     public static void unlockLevel(int level)
     {
         JsonData levelModeProgress = Storage.get("levelModeProgress");
@@ -679,6 +683,7 @@ public class GameManage : MonoBehaviour
     }
 
 
+    // 짧은 별 조건 리턴
     public static string getShortStarConditionText(string pStarCondition)
     {
         string result = "";
@@ -731,6 +736,7 @@ public class GameManage : MonoBehaviour
 
     }
 
+    // 긴 별 조건 리턴
     public static string getLongStarConditionText(string pStarCondition)
     {
         string result = "";
@@ -794,7 +800,7 @@ public class GameManage : MonoBehaviour
 
 
 
-
+    // 맵 에디터에서 레벨 테스트로 이동
     public static void goLevelTestMode()
     {
         if (GameManage.isEditMode)
@@ -812,6 +818,7 @@ public class GameManage : MonoBehaviour
 
     }
 
+    // 맵 에디터에서 레벨 테스트 중에 다시 에디터로 이동
     public static void goEditLevelMode()
     {
         if (!GameManage.isEditMode)
@@ -821,6 +828,7 @@ public class GameManage : MonoBehaviour
 
     }
 
+    // 맵 에디터에서 규칙위반 타일은 없는 지, 목적지는 정해져있는 지 등 확인
     public static bool checkIsValidMap()
     {
         for (int i = 0; i < mapInfo.mapHeight; i++)
@@ -861,7 +869,7 @@ public class GameManage : MonoBehaviour
     }
 
 
-
+    // 현재 editMode(현재 선택된 맵에 배치할 오브젝트) 변경
     public static void changeSelectedEditMode(EditMode editMode_)
     {
         if (editMode == editMode_)
@@ -875,7 +883,7 @@ public class GameManage : MonoBehaviour
         refreshEditSelectable();
     }
 
-
+    // 현재 editMode 상태에서 해당 오브젝트 배치 가능 타일 표시
     public static void refreshEditSelectable()
     {
         if (editMode == EditMode.deleteBlock)
@@ -1024,6 +1032,7 @@ public class GameManage : MonoBehaviour
     }
 
 
+    // 수정모드 (x, y)에 배치
     public static void editExecute(int x, int y)
     {
         // bool prevIsEditSelectable = isEditSelectable;
@@ -1201,18 +1210,19 @@ public class GameManage : MonoBehaviour
         GameManage.refreshEditSelectable();
     }
 
-
+    // 게임 리스타트
     public static void restartGame()
     {
         SceneManager.LoadScene("GameScene");
     }
 
+    // 모달 이름으로 모달 오브젝트 가져옴
     public static GameObject getModalObject(string modalName)
     {
         return modalDict[modalName];
     }
 
-
+    // 맵 에디터에서 맵 사이즈 바꿈
     public static void changeMapSize(int width, int height)
     {
 
