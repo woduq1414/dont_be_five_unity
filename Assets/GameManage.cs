@@ -430,15 +430,23 @@ public class GameManage : MonoBehaviour {
 		moveCount = 0;
 		selectedItem = null;
 		selectMode = SelectMode.normal;
+    
 
+        // Debug.Log(isEditMode);
+        // Debug.Log("FFFF");
+        // Debug.Log(GlobalVar.Instance.gameMode);
+
+ 
 		if (!isEditMode) {
 			if (GlobalVar.Instance.gameMode == GameMode.levelMode) {
 				JsonData jsonData = GlobalVar.Instance.jsonLevelDataList;
 				mapInfo = new MapInfo();
 
 				if (GlobalVar.Instance == null) {
+     
 					mapInfo.fromJson(jsonData["levels"][0]);
 				} else {
+            
 					mapInfo.fromJson(jsonData["levels"][GlobalVar.Instance.level - 1]);
 				}
 			} else if (GlobalVar.Instance.gameMode == GameMode.editTestMode) {
@@ -451,8 +459,12 @@ public class GameManage : MonoBehaviour {
 				usedItemDict.Add(item, 0);
 			}
 		} else {
-			if (GlobalVar.Instance == null || GlobalVar.Instance.editModeMapInfo == null) {
-				mapInfo = new MapInfo();
+
+            
+
+			if (GlobalVar.Instance == null || GlobalVar.Instance.editModeMapInfo.map == null) {
+          
+            	mapInfo = new MapInfo();
 
 				int initMapWidth = 5;
 				int initMapHeight = 5;
@@ -469,7 +481,12 @@ public class GameManage : MonoBehaviour {
 				}
 
 				mapInfo.pStarCondition = new string[3] { "move 25", "move 20", "move 15" };
+
+          
+
 			} else {
+
+         
 				mapInfo = GlobalVar.Instance.editModeMapInfo;
 			}
 		}
@@ -957,6 +974,9 @@ public class GameManage : MonoBehaviour {
 
 		if (!isEditMode) {
 			int k = 0;
+
+
+
 			var availableItemList = new List<ItemData>(mapInfo.items.Keys).Where(x => mapInfo.items[x] != 0).ToList();
 
 			foreach (ItemData item in availableItemList) {

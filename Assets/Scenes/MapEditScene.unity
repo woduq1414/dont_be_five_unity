@@ -2592,8 +2592,10 @@ MonoBehaviour:
   goalPrefab: {fileID: 3525661451086863207, guid: b64aae7aaca93b54caed98f6e568557f,
     type: 3}
   canvas: {fileID: 1790893906}
-  itemButtonPrefab: {fileID: 0}
-  starConditionSquarePrefab: {fileID: 0}
+  itemButtonPrefab: {fileID: 4695115855972347618, guid: f0b2fcdd2ae4f2641aafe7c187314633,
+    type: 3}
+  starConditionSquarePrefab: {fileID: 3204729394293628499, guid: 71f9c57717bd71b4984d71744a8825cf,
+    type: 3}
 --- !u!4 &518757668
 Transform:
   m_ObjectHideFlags: 0
@@ -7494,8 +7496,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   editModeMapInfo:
-    mapWidth: 0
     mapHeight: 0
+    mapWidth: 0
     pStarCondition: []
     goalPos: {x: -1, y: -1}
 --- !u!4 &1816834894

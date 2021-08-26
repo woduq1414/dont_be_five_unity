@@ -40,6 +40,7 @@ public class GlobalVar : MonoBehaviour
 
     private void Awake()
     {
+        Debug.Log("global var awake");
 
         if(jsonLevelDataList == null){
             string json = Resources.Load("MapData").ToString();
@@ -60,7 +61,7 @@ public class GlobalVar : MonoBehaviour
         // Debug.Log("DATA:" + Storage.get("levelModeProgress")[0][0]);
 
 
-
+        gameMode = GameMode.levelMode;
 
         if (Instance != null && Instance != this)
         {
